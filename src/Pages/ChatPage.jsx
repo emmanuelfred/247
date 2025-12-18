@@ -288,7 +288,13 @@ export default function ChatPage() {
       {/* Right Chat Section */}
       <main className="flex-1 flex flex-col p-1 md:p-4 border-gray-100 border-1">
         {!activeChat ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
+          <div className="flex flex-col items-center justify-center h-full text-center relative">
+             <button 
+                  className="md:hidden absolute top-4 left-4"
+                  onClick={() => setSidebarOpen(true)}
+                >
+                  <FiMenu size={22} />
+                </button>
             <img src="/empty-chat.png" alt="empty" className="w-64 mb-4" />
             <p className="text-gray-600 mb-2">You do not have any message</p>
             <button 

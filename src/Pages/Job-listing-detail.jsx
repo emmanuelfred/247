@@ -10,6 +10,9 @@ import WriteReviewModal from "../Component/WriteReviewModal";
 import { useReviewStore } from "../stores/reviewStore";
 import { useUserStore } from "../stores/userStore";
 import ChatButton from "../Component/Chatbutton";
+import { useBookmarkStore } from "../stores/bookmarkStore";
+
+
 export default function JobListingDetail() {
   const { id } = useParams();
   const { currentJob, fetchJobDetail, jobs, fetchJobs, loading } = useJobsStore();
@@ -20,6 +23,39 @@ export default function JobListingDetail() {
   const { user, accessToken } = useUserStore();
   const [sortBy, setSortBy] = useState('newest');
   const [hasApplied, setHasApplied] = useState(false);
+    const [isSaved, setIsSaved] = useState(false);
+    
+    const { saveListing, unsaveListing, isListingSaved, savingId } = useBookmarkStore();
+  
+  
+    // Check if listing is saved
+    useEffect(() => {
+      if (user && id) {
+        const saved = isListingSaved('job', id);
+        setIsSaved(saved);
+      }
+    }, [id, user, isListingSaved]);
+  
+ 
+  
+    const handleSave = async (e) => {
+      e.stopPropagation(); // Prevent card click
+  
+      if (!user || !accessToken) {
+        navigate('/login');
+        return;
+      }
+  
+      const result = isSaved 
+        ? await unsaveListing('job', id, accessToken)
+        : await saveListing('job', id, accessToken);
+  
+      if (result.success) {
+        setIsSaved(!isSaved);
+      }
+    };
+  
+    const isSaving = savingId === `job-${id}`;
 
   useEffect(() => {
     // Fetch job detail when component mounts
@@ -102,7 +138,8 @@ export default function JobListingDetail() {
       {/* Header - Fixed for mobile */}
       <div className="flex flex-col md:flex-row md:items-start md:justify-between w-full py-4 gap-4">
         {/* Left Section */}
-        <div className="flex flex-col sm:flex-row items-start gap-3 flex-1">
+        <div className="flex flex-col  items-start gap-3 flex-1">
+          <div className="flex  sm:flex-row items-start gap-3 w-full">
           {/* Avatar */}
           <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
             {currentJob.posted_by?.profile_photo ? (
@@ -115,9 +152,7 @@ export default function JobListingDetail() {
               <div className="w-full h-full bg-gray-300" />
             )}
           </div>
-
-          {/* Listing Info */}
-          <div className="flex-1 min-w-0">
+          <div className="ml-0 sm:ml-4">
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <h2 className="font-semibold text-lg sm:text-xl text-gray-900 break-words">
                 {currentJob.job_title}
@@ -126,24 +161,31 @@ export default function JobListingDetail() {
                 Verified
               </span>
             </div>
+             <p className="text-sm text-gray-500 mb-2">{currentJob.company_name}</p>
+          </div>
+            </div>
 
-            <p className="text-sm text-gray-500 mb-2">{currentJob.company_name}</p>
+          {/* Listing Info */}
+          <div className="flex-1 min-w-0 md:pl-3 ">
+          
+
+           
 
             {/* Info badges - Stack on mobile */}
-            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-gray-500 text-xs sm:text-sm">
-              <span className="flex items-center gap-1 whitespace-nowrap">
+            <div className="flex flex-wrap items-center  gap-1 md:gap-4 text-gray-500 text-xs sm:text-sm">
+              <span className="flex items-center  whitespace-nowrap">
                 <MapPin size={14} className="flex-shrink-0" /> 
                 {currentJob.city}, {currentJob.state}
               </span>
-              <span className="flex items-center gap-1 whitespace-nowrap">
+              <span className="flex items-center  whitespace-nowrap">
                 <Briefcase size={14} className="flex-shrink-0" /> 
                 {currentJob.job_type.replace('_', ' ')}
               </span>
-              <span className="flex items-center gap-1 whitespace-nowrap">
+              <span className="flex items-center  whitespace-nowrap">
                 <DollarSign size={14} className="flex-shrink-0" /> 
-                {`₦${currentJob.minimum_salary}-${currentJob.maximum_salary}/${currentJob.salary_period.replace('per_', '')}`}
+                {`₦${currentJob.minimum_salary} - ${currentJob.maximum_salary} /${currentJob.salary_period.replace('per_', '')}`}
               </span>
-              <span className="flex items-center gap-1 whitespace-nowrap">
+              <span className="flex items-center whitespace-nowrap">
                 <Clock size={14} className="flex-shrink-0" /> 
                 Posted {currentJob.created_at}
               </span>
@@ -163,8 +205,14 @@ export default function JobListingDetail() {
               }}}>
                 {currentJob.application_method === 'external_link'||currentJob.application_method === 'onsite' ? 'Apply Now' : 'Contact Employer'}
               </button>
-              <button className="p-2 border border-gray-200 rounded-md hover:bg-gray-50">
-                <Bookmark size={16} />
+              <button onClick={handleSave}
+          disabled={isSaving}
+          className={`flex items-center space-x-1 border px-3 py-1 rounded-lg hover:bg-gray-100 transition ${
+            isSaved 
+              ? 'border-orange-500 text-orange-500' 
+              : 'border-gray-300 text-gray-400 hover:text-gray-600'
+          } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                <Bookmark size={16}  fill={isSaved ? 'currentColor' : 'none'}/>
               </button>
               <button className="p-2 border border-gray-200 rounded-md hover:bg-gray-50">
                 <Share2 size={16} />
@@ -174,7 +222,7 @@ export default function JobListingDetail() {
         </div>
 
         {/* Post Listing Dropdown - Better mobile positioning */}
-        <div className="relative self-start sm:self-auto">
+        <div className="relative self-start sm:self-auto md:pl-3 w-full md:w-auto flex justify-end">
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
             className="bg-[#F2954D] text-white px-4 py-2 rounded-md hover:bg-[#e2853f] transition flex items-center gap-2 w-full sm:w-auto justify-center"
@@ -185,7 +233,7 @@ export default function JobListingDetail() {
           </button>
 
           {dropdownOpen && (
-            <div className="absolute right-0 mt-2 w-44 bg-white shadow-lg rounded-md border border-gray-200 z-10">
+            <div className="absolute top-8  right-0 mt-2 w-44 bg-white shadow-lg rounded-md border border-gray-200 z-10 w-full ">
               <Link
                 to="/post-job"
                 className="block px-4 py-2 hover:bg-gray-100 text-gray-700"
@@ -243,7 +291,7 @@ export default function JobListingDetail() {
                           <p className="text-xs font-semibold text-gray-800">
                             {`₦${currentJob.minimum_salary}-${currentJob.maximum_salary}/${currentJob.salary_period.replace('per_', '')}`}
                           </p>
-                          <div className="flex gap-3 mt-3 md:mt-0">
+                          <div className="flex flex-col md:flex-row gap-3 mt-3 md:mt-0">
                             <button 
                               onClick={handleContactSeller}
                               className="flex flex-1 items-center justify-center gap-2 py-2 rounded-md bg-[#FCEEE7]"

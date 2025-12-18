@@ -104,7 +104,7 @@ export default function JobCard({
       </div>
 
       {/* Job Title */}
-      <div className="flex md:flex-col justify-between">
+      <div className="flex flex-col justify-between">
         <div className="mt-2">
           <h3 className="font-semibold text-gray-800 text-lg">{title}</h3>
         </div>

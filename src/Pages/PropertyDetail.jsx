@@ -15,6 +15,7 @@ import {
   CheckCircle,
   Share2,
   Bookmark,
+  ShieldCheck
 } from "lucide-react";
 import ReportListingModal from "../Component/ReportListingModal";
 import PropertyCard from "../Component/PropertyCard";
@@ -24,13 +25,13 @@ import ChatButton from "../Component/Chatbutton";
 // ⭐ ADD REVIEW IMPORTS
 import WriteReviewModal from "../Component/WriteReviewModal";
 import { useReviewStore } from "../stores/reviewStore";
-
+import { useBookmarkStore } from "../stores/bookmarkStore";
 const PropertyDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { currentProperty, properties, loading, fetchPropertyDetail, fetchProperties, clearCurrentProperty } = usePropertyStore();
   const { user, accessToken } = useUserStore();
-
+   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showInquiryModal, setShowInquiryModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
   
@@ -38,7 +39,38 @@ const PropertyDetail = () => {
   const { reviews, ratingSummary, fetchReviews, markHelpful } = useReviewStore();
   const [sortBy, setSortBy] = useState('newest');
   const [hasInquired, setHasInquired] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  
+  const { saveListing, unsaveListing, isListingSaved, savingId } = useBookmarkStore();
+ 
 
+  // Check if listing is saved
+  useEffect(() => {
+    if (user && id) {
+      const saved = isListingSaved('property', id);
+      setIsSaved(saved);
+    }
+  }, [id, user, isListingSaved]);
+
+
+
+  const handleSave = async (e) => {
+    e.stopPropagation(); // Prevent card click
+
+    if (!user || !accessToken) {
+      navigate('/login');
+      return;
+    }
+
+    const result = isSaved 
+      ? await unsaveListing('property', id, accessToken)
+      : await saveListing('property', id, accessToken);
+
+    if (result.success) {
+      setIsSaved(!isSaved);
+    }
+  };
+  const isSaving = savingId === `property-${id}`;
   useEffect(() => {
     const loadData = async () => {
       if (id) {
@@ -186,63 +218,110 @@ const PropertyDetail = () => {
   return (
     <div className="max-w-6xl mx-auto py-10 px-3 md:px-4 pt-13 md:pt-22">
       {/* Header Section */}
-      <div className="hidden md:flex items-center flex-col md:flex-row justify-between w-full py-4">
-        {/* Left Section */}
-        <div className="flex items-start gap-3">
-          {/* Avatar */}
-          <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
-            {property.posted_by?.profile_photo ? (
-              <img src={property.posted_by.profile_photo} alt={property.posted_by.first_name || 'User'} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">
-                {property.posted_by?.first_name?.charAt(0) || '?'}{property.posted_by?.last_name?.charAt(0) || ''}
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between w-full py-4 gap-4">
+        <div className="flex flex-col  items-start gap-3 flex-1">
+          {/* Left Section */}
+          <div className="flex flex-col  items-start gap-3">
+            <div className="flex gap-3">
+              {/* Avatar */}
+            <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
+              {property.posted_by?.profile_photo ? (
+                <img src={property.posted_by.profile_photo} alt={property.posted_by.first_name || 'User'} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">
+                  {property.posted_by?.first_name?.charAt(0) || '?'}{property.posted_by?.last_name?.charAt(0) || ''}
+                </div>
+              )}
+            </div>
+              <div>
+                <div className="flex items-center gap-2">
+                <h2 className="font-semibold text-lg text-gray-900">{property.property_title || 'Untitled Property'}</h2>
+                <span className="text-xs bg-blue-600 text-white rounded-full p-0.5 flex items-center justify-center">
+                <ShieldCheck size={20}  />
+                </span>
+                
+
               </div>
-            )}
+              <p className="text-sm text-gray-500">
+                {property.posted_by?.first_name || ''} {property.posted_by?.last_name || ''}
+              </p>
+
+              </div>
+            
+
+            </div>
+          
+
+            {/* Listing Info */}
+            <div className="md:ml-7">
+        
+
+              
+              <div className="flex flex-wrap items-center  gap-1 md:gap-4 items-center  mt-1 text-gray-500 text-sm">
+                <span className="flex items-center ">
+                  <MapPin size={14} /> {property.city || 'N/A'}, {property.state || 'N/A'}
+                </span>
+                <span className="flex items-center">
+                  <Home size={14} /> {property.price_period || 'N/A'}
+                </span>
+                <span className="flex items-center ">
+                  <CheckCircle size={14} /> {property.furnishing_status || 'N/A'}
+                </span>
+                <span className="flex items-center ">
+                  <Clock size={14} /> {property.created_at ? getTimeAgo(property.created_at) : 'Recently'}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 mt-3">
+                <button 
+                  onClick={handleInquiry}
+                  className="bg-orange-400 hover:bg-orange-500 text-white text-sm font-medium px-4 py-1.5 rounded-md"
+                >
+                  Make an Inquiry
+                </button>
+                <button  onClick={handleSave}
+          disabled={isSaving}
+            className={`flex items-center space-x-1 border px-3 py-1 rounded-lg hover:bg-gray-100 transition ${
+            isSaved 
+              ? 'border-orange-500 text-orange-500' 
+              : 'border-gray-300 text-gray-400 hover:text-gray-600'
+          } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                  <Bookmark size={16}  fill={isSaved ? 'currentColor' : 'none'} />
+                </button>
+                <button className="p-2 border border-gray-100 rounded-md hover:bg-gray-50">
+                  <Share2 size={16} />
+                </button>
+              </div>
+            </div>
           </div>
+        </div>
+        {/* Post Listing Dropdown - Better mobile positioning */}
+        <div className="relative self-start sm:self-auto md:pl-3 w-full md:w-auto flex justify-end">
+          <button
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            className="bg-[#F2954D] text-white px-4 py-2 rounded-md hover:bg-[#e2853f] transition flex items-center gap-2 w-full sm:w-auto justify-center"
+          >
+            <span>+</span>
+            <span>Post a Listing</span>
+            <ChevronDown size={18} />
+          </button>
 
-          {/* Listing Info */}
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="font-semibold text-lg text-gray-900">{property.property_title || 'Untitled Property'}</h2>
-              <span className="text-xs bg-blue-600 text-white rounded-full px-2 py-0.5 flex items-center">
-                Verified
-              </span>
-            </div>
-
-            <p className="text-sm text-gray-500">
-              {property.posted_by?.first_name || ''} {property.posted_by?.last_name || ''}
-            </p>
-
-            <div className="flex items-center gap-4 mt-1 text-gray-500 text-sm">
-              <span className="flex items-center gap-1">
-                <MapPin size={14} /> {property.city || 'N/A'}, {property.state || 'N/A'}
-              </span>
-              <span className="flex items-center gap-1">
-                <Home size={14} /> {property.price_period || 'N/A'}
-              </span>
-              <span className="flex items-center gap-1">
-                <CheckCircle size={14} /> {property.furnishing_status || 'N/A'}
-              </span>
-              <span className="flex items-center gap-1">
-                <Clock size={14} /> {property.created_at ? getTimeAgo(property.created_at) : 'Recently'}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2 mt-3">
-              <button 
-                onClick={handleInquiry}
-                className="bg-orange-400 hover:bg-orange-500 text-white text-sm font-medium px-4 py-1.5 rounded-md"
+          {dropdownOpen && (
+            <div className="absolute top-8  right-0 mt-2 w-44 bg-white shadow-lg rounded-md border border-gray-200 z-10 w-full ">
+              <Link
+                to="/post-job"
+                className="block px-4 py-2 hover:bg-gray-100 text-gray-700"
               >
-                Make an Inquiry
-              </button>
-              <button className="p-2 border border-gray-100 rounded-md hover:bg-gray-50">
-                <Bookmark size={16} />
-              </button>
-              <button className="p-2 border border-gray-100 rounded-md hover:bg-gray-50">
-                <Share2 size={16} />
-              </button>
+                Post Job
+              </Link>
+              <Link
+                to="/post-property"
+                className="block px-4 py-2 hover:bg-gray-100 text-gray-700"
+              >
+                Post Property
+              </Link>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -280,7 +359,7 @@ const PropertyDetail = () => {
               <p className="text-xs font-semibold text-gray-800">
                 ₦{parseFloat(property.price).toLocaleString()}{property.price_period.toLowerCase().includes("month") ? "/mt" : property.price_period.toLowerCase().includes("year") ? "/yr" : ""}
               </p>
-              <div className="flex gap-3 mt-3 md:mt-0">
+              <div className="flex flex-col md:flex-row gap-3 mt-3 md:mt-0">
                 <button 
                   onClick={handleContactSeller}
                   className="flex flex-1 items-center justify-center gap-2 py-2 rounded-md bg-[#FCEEE7]"

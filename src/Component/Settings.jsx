@@ -158,7 +158,8 @@ export default function Settings() {
            {/* ===================== PASSWORD MODAL ===================== */}
       {showPasswordModal && (
         <div
-          className="fixed inset-0 bg-opacity-40 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-opacity-40 flex items-center justify-center z-50 p-4"
+          style={{background:'#00000036'}}
           onClick={() => setShowPasswordModal(false)}
         >
           <div
@@ -240,7 +241,8 @@ export default function Settings() {
       {/* ===================== EMAIL MODAL ===================== */}
       {showEmailModal && (
         <div
-          className="fixed inset-0  bg-opacity-40 flex items-center justify-center z-50"
+          className="fixed inset-0  bg-opacity-40 flex items-center justify-center z-50 p-4"
+          style={{background:'#00000036'}}
           onClick={() => setShowEmailModal(false)}
         >
           <div
