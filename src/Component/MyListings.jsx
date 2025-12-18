@@ -84,7 +84,10 @@ export default function MyListings() {
 
   const listings = getFilteredListings();
   const loading = jobsLoading || propertiesLoading;
-
+  const veiw_applicant = (jobId) => {
+    return () => {
+      navigate(`/jobs/${jobId}/applications`);
+    };}
   // Get status badge color
   const getStatusBadge = (status) => {
     const badges = {
@@ -100,7 +103,7 @@ export default function MyListings() {
     return (
       <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400"></div>
         </div>
       </div>
     );
@@ -122,16 +125,17 @@ export default function MyListings() {
           </p>
           <div className="flex gap-3">
             <button 
-              onClick={() => navigate('/jobs/create')}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+              onClick={() => navigate('/post-job')}
+              className="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700"
             >
               Post a Job
             </button>
             <button 
-              onClick={() => navigate('/properties/create')}
+              onClick={() => navigate('/post-property')}
               className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600"
             >
               Post a Property
+              
             </button>
           </div>
         </div>
@@ -180,7 +184,7 @@ export default function MyListings() {
         {listings.map((listing) => (
           <div
             key={`${listing.type}-${listing.id}`}
-            className="border border-gray-200 bg-white rounded shadow-sm hover:shadow-md transition-all p-5 flex flex-col justify-between"
+            className="border border-gray-200 bg-white rounded shadow-sm hover:shadow-md transition-all p-2 flex flex-col justify-between"
           >
             {/* Header */}
             <div>
@@ -201,15 +205,20 @@ export default function MyListings() {
                 )}
                 
                 {/* Stats */}
-                <div className="flex flex-col items-end gap-1 text-xs">
-                  <span className="text-gray-600 flex items-center gap-1">
-                    <FiMessageSquare size={12} />
-                    {listing.applicants}
+                <div className="flex flex-col items-end gap-1 text-xs border-gray-200 text-gray-500 hover:text-gray-700 border bg-white bg-opacity-90 rounded-lg border-2 px-2 py-1 flex items-center space-x-1 text-xs hover:bg-opacity-100 transition">
+                  {listing.type === 'job' &&  (
+                  <span className="text-gray-600 flex items-center gap-1" onClick={veiw_applicant(listing.id)}>
+                     { listing.applicants} Applicants
+                    
+                    
+                   
+                  
                   </span>
-                  {listing.type === 'property' && listing.views > 0 && (
+                 ) }
+                  {listing.type === 'property' && (
                     <span className="text-gray-600 flex items-center gap-1">
-                      <FiEye size={12} />
-                      {listing.views}
+                     seen by
+                      {listing.views} 
                     </span>
                   )}
                 </div>

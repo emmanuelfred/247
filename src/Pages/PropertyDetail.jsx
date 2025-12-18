@@ -167,11 +167,16 @@ const PropertyDetail = () => {
     return `Posted ${Math.floor(diffDays / 30)} months ago`;
   };
 
-  const handleContactSeller = () => {
+  const handleInquiry = () => {
     if (!user) {
       navigate("/login");
     } else {
       setShowInquiryModal(true);
+    }
+  };
+  const handleContactSeller = () => {
+    if (property.posted_by.phone_number) {
+      window.open(`tel:${property.posted_by.phone_number}`, "_blank");
     }
   };
 
@@ -225,10 +230,10 @@ const PropertyDetail = () => {
 
             <div className="flex items-center gap-2 mt-3">
               <button 
-                onClick={handleContactSeller}
+                onClick={handleInquiry}
                 className="bg-orange-400 hover:bg-orange-500 text-white text-sm font-medium px-4 py-1.5 rounded-md"
               >
-                Contact seller
+                Make an Inquiry
               </button>
               <button className="p-2 border border-gray-100 rounded-md hover:bg-gray-50">
                 <Bookmark size={16} />

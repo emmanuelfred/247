@@ -45,7 +45,7 @@ export default function JobList() {
   const searchQuery = searchParams.get('q');
 
   return (
-    <div className="max-w-6xl mx-auto py-10 px-3 md:px-4 pt-13 md:pt-22">
+    <div className="max-w-7xl mx-auto py-10 px-3  pt-13 md:pt-22">
       <div className="mb-5">
         <h2 className="text-2xl md:text-3xl font-bold leading-tight">Find Your Next Job</h2>
         <p>Search through thousands of verified job listings to find your perfect match.</p>
@@ -94,7 +94,7 @@ export default function JobList() {
           )}
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 w-full">
           {jobs.map((job) => (
             <JobCard 
               key={job.id} 

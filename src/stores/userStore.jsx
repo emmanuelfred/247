@@ -1,10 +1,10 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import axios from "axios";  // Keep for public endpoints (login, signup, etc.)
-import api from "../utils/api";  // ✅ Import interceptor for authenticated requests
+import axios from "axios";
+import api from "../utils/api";
 import toast from "react-hot-toast";
 
-const API_URL = import.meta.env.VITE_API_URL + '/auth';
+const API_URL = import.meta.env.VITE_API_URL + "/auth";
 
 export const useUserStore = create(
   persist(
@@ -16,18 +16,22 @@ export const useUserStore = create(
       error: null,
       message: null,
 
-      // ============================================
-      // PUBLIC ENDPOINTS (Use axios - no auth)
-      // ============================================
+      // =====================================================
+      // PUBLIC ENDPOINTS (axios)
+      // =====================================================
 
-      // ❌ Public - use axios
       signup: async (data) => {
         set({ loading: true, error: null, message: null });
 
         try {
           const res = await axios.post(`${API_URL}/signup/`, data);
 
-          set({ message: res.data.message, loading: false });
+          toast.success(res.data.message);
+
+          set({
+            loading: false,
+            message: res.data.message,
+          });
 
           return {
             success: true,
@@ -35,37 +39,54 @@ export const useUserStore = create(
             user_id: res.data.user_id,
           };
         } catch (err) {
-          const errorMsg = err.response?.data?.message || "Signup failed";
+          const errorMsg =
+            err.response?.data?.message || "Signup failed";
 
-          set({ error: errorMsg, loading: false });
+          toast.error(errorMsg);
+
+          set({
+            loading: false,
+            error: errorMsg,
+          });
 
           return { success: false, error: errorMsg };
         }
       },
 
-      // ❌ Public - use axios
       login: async (data) => {
-        set({ loading: true, error: null });
+        set({ loading: true, error: null, message: null });
 
         try {
           const res = await axios.post(`${API_URL}/login/`, data);
+
+          toast.success("Login successful");
 
           set({
             user: res.data.user,
             accessToken: res.data.token,
             refreshToken: res.data.refresh,
-            loading: false
+            loading: false,
           });
 
           return { success: true };
         } catch (err) {
-          const errorMsg = err.response?.data?.message || "Login failed";
-          set({ error: errorMsg, loading: false });
+          const errorMsg =
+            err.response?.data?.message || "Login failed";
+
+          toast.error(errorMsg);
+
+          set({
+            loading: false,
+            error: errorMsg,
+          });
+
           return { success: false, error: errorMsg };
         }
       },
 
       logout: () => {
+        toast.success("Logged out successfully");
+
         set({
           user: null,
           accessToken: null,
@@ -76,79 +97,145 @@ export const useUserStore = create(
         });
       },
 
-      // ❌ Public - use axios
       verifyEmail: async (uid, token) => {
         set({ loading: true, error: null, message: null });
+
         try {
           const res = await axios.get(
             `${API_URL}/verify-email/${uid}/${token}/`
           );
-          set({ message: res.data.message, loading: false });
-        } catch (err) {
+
+          toast.success(res.data.message);
+
           set({
-            error: err.response?.data || "Email verification failed",
             loading: false,
-          });
-        }
-      },
-
-      // ❌ Public - use axios
-      resendVerificationLink: async (email) => {
-        set({ loading: true, error: null, message: null });
-
-        try {
-          const res = await axios.post(`${API_URL}/resend-verification/`, { email });
-          set({ message: res.data.message, loading: false });
-        } catch (err) {
-          set({ error: err.response?.data, loading: false });
-        }
-      },
-
-      // ============================================
-      // AUTHENTICATED ENDPOINTS (Use api - with interceptor)
-      // ============================================
-
-      // ✅ Authenticated - use api
-      identityVerification: async (userId, data) => {
-        set({ loading: true, error: null, message: null });
-        try {
-          const res = await api.post(`/identity/${userId}/`, data, {
-            headers: { "Content-Type": "multipart/form-data" },
-          });
-          
-          set({ message: res.data.message, loading: false });
-          return { success: true, message: res.data.message };
-        } catch (err) {
-          const errorData = err.response?.data || {
-            message: "Identity verification failed",
-          };
-          set({ error: errorData, loading: false });
-          return { success: false, error: errorData };
-        }
-      },
-
-      // ✅ Authenticated - use api
-      saveChanges: async (formData) => {
-        set({ loading: true, error: null, message: null });
-
-        try {
-          const res = await api.put('/update-profile/', formData, {
-            headers: { "Content-Type": "application/json" },
+            message: res.data.message,
           });
 
-          set({ user: res.data.user, loading: false });
-
-          return { success: true, message: "Profile updated successfully" };
-
+          return { success: true };
         } catch (err) {
-          const errorMsg = err.response?.data?.message || "Profile update failed";
-          set({ error: errorMsg, loading: false });
+          const errorMsg =
+            err.response?.data?.message || "Email verification failed";
+
+          toast.error(errorMsg);
+
+          set({
+            loading: false,
+            error: errorMsg,
+          });
 
           return { success: false, error: errorMsg };
         }
       },
 
-      // ✅ Authenticated - use api
+      resendVerificationLink: async (email) => {
+        set({ loading: true, error: null, message: null });
+
+        try {
+          const res = await axios.post(
+            `${API_URL}/resend-verification/`,
+            { email }
+          );
+
+          toast.success(res.data.message);
+
+          set({
+            loading: false,
+            message: res.data.message,
+          });
+
+          return { success: true };
+        } catch (err) {
+          const errorMsg =
+            err.response?.data?.message ||
+            "Failed to resend verification link";
+
+          toast.error(errorMsg);
+
+          set({
+            loading: false,
+            error: errorMsg,
+          });
+
+          return { success: false, error: errorMsg };
+        }
+      },
+
+      // =====================================================
+      // AUTHENTICATED ENDPOINTS (api interceptor)
+      // =====================================================
+
+      identityVerification: async (userId, data) => {
+        set({ loading: true, error: null, message: null });
+
+        try {
+          const res = await api.post(
+            `/auth/identity/${userId}/`,
+            data,
+            {
+              headers: { "Content-Type": "multipart/form-data" },
+            }
+          );
+
+          toast.success(res.data.message);
+
+          set({
+            loading: false,
+            message: res.data.message,
+          });
+
+          return { success: true, message: res.data.message };
+        } catch (err) {
+          const errorMsg =
+            err.response?.data?.message ||
+            "Identity verification failed";
+
+          toast.error(errorMsg);
+
+          set({
+            loading: false,
+            error: errorMsg,
+          });
+
+          return { success: false, error: errorMsg };
+        }
+      },
+
+      saveChanges: async (formData) => {
+        set({ loading: true, error: null, message: null });
+
+        try {
+          const res = await api.put(
+            "/update-profile/",
+            formData,
+            { headers: { "Content-Type": "application/json" } }
+          );
+
+          toast.success("Profile updated successfully");
+
+          set({
+            user: res.data.user,
+            loading: false,
+            message: "Profile updated successfully",
+          });
+
+          return { success: true };
+        } catch (err) {
+          const errorMsg =
+            err.response?.data?.message ||
+            "Profile update failed";
+
+          toast.error(errorMsg);
+
+          set({
+            loading: false,
+            error: errorMsg,
+          });
+
+          return { success: false, error: errorMsg };
+        }
+      },
+
       updatePassword: async (data) => {
         set({ loading: true, error: null, message: null });
 
@@ -160,23 +247,35 @@ export const useUserStore = create(
         }
 
         try {
-          const res = await api.post(`/update-password/${userId}/`, data);
+          const res = await api.post(
+            `/auth/update-password/${userId}/`,
+            data
+          );
 
           toast.success(res.data.message);
-          set({ loading: false, message: res.data.message });
+
+          set({
+            loading: false,
+            message: res.data.message,
+          });
 
           return { success: true };
-
         } catch (err) {
-          const errorMsg = err.response?.data?.message || "Failed to update password";
+          const errorMsg =
+            err.response?.data?.message ||
+            "Failed to update password";
+
           toast.error(errorMsg);
 
-          set({ loading: false, error: errorMsg });
+          set({
+            loading: false,
+            error: errorMsg,
+          });
+
           return { success: false, error: errorMsg };
         }
       },
 
-      // ✅ Authenticated - use api
       updateEmail: async (email) => {
         set({ loading: true, error: null, message: null });
 
@@ -188,28 +287,36 @@ export const useUserStore = create(
         }
 
         try {
-          const res = await api.post(`/update-email/${userId}/`, { email });
+          const res = await api.post(
+            `/auth/update-email/${userId}/`,
+            { email }
+          );
 
           toast.success(res.data.message);
 
           set({
-            user: { ...get().user, email: email },
+            user: { ...get().user, email },
             loading: false,
-            message: res.data.message
+            message: res.data.message,
           });
 
           return { success: true };
-
         } catch (err) {
-          const errorMsg = err.response?.data?.message || "Failed to update email";
+          const errorMsg =
+            err.response?.data?.message ||
+            "Failed to update email";
+
           toast.error(errorMsg);
 
-          set({ loading: false, error: errorMsg });
+          set({
+            loading: false,
+            error: errorMsg,
+          });
+
           return { success: false, error: errorMsg };
         }
       },
 
-      // ✅ Authenticated - use api
       uploadCoverPhoto: async (file) => {
         set({ loading: true, error: null, message: null });
 
@@ -217,7 +324,7 @@ export const useUserStore = create(
 
         if (!userId) {
           toast.error("Not authenticated");
-          return { success: false, error: "Not authenticated" };
+          return { success: false };
         }
 
         try {
@@ -225,35 +332,41 @@ export const useUserStore = create(
           formData.append("cover_photo", file);
 
           const res = await api.post(
-            `/upload-cover-photo/${userId}/`,
+            `/auth/upload-cover-photo/${userId}/`,
             formData,
             {
-              headers: {
-                "Content-Type": "multipart/form-data",
-              },
+              headers: { "Content-Type": "multipart/form-data" },
             }
           );
 
           toast.success(res.data.message);
 
           set({
-            user: { ...get().user, cover_photo: res.data.cover_photo },
+            user: {
+              ...get().user,
+              cover_photo: res.data.cover_photo,
+            },
             loading: false,
             message: res.data.message,
           });
 
-          return { success: true, cover_photo: res.data.cover_photo };
-
+          return { success: true };
         } catch (err) {
-          const errorMsg = err.response?.data?.error || "Failed to upload cover photo";
+          const errorMsg =
+            err.response?.data?.error ||
+            "Failed to upload cover photo";
+
           toast.error(errorMsg);
 
-          set({ loading: false, error: errorMsg });
+          set({
+            loading: false,
+            error: errorMsg,
+          });
+
           return { success: false, error: errorMsg };
         }
       },
 
-      // ✅ Authenticated - use api
       uploadProfilePhoto: async (file) => {
         set({ loading: true, error: null, message: null });
 
@@ -261,7 +374,7 @@ export const useUserStore = create(
 
         if (!userId) {
           toast.error("Not authenticated");
-          return { success: false, error: "Not authenticated" };
+          return { success: false };
         }
 
         try {
@@ -269,37 +382,41 @@ export const useUserStore = create(
           formData.append("profile_photo", file);
 
           const res = await api.post(
-            `/upload-profile-photo/${userId}/`,
+            `/auth/upload-profile-photo/${userId}/`,
             formData,
             {
-              headers: {
-                "Content-Type": "multipart/form-data",
-              },
+              headers: { "Content-Type": "multipart/form-data" },
             }
           );
 
           toast.success(res.data.message);
 
           set({
-            user: { ...get().user, profile_photo: res.data.profile_photo },
+            user: {
+              ...get().user,
+              profile_photo: res.data.profile_photo,
+            },
             loading: false,
             message: res.data.message,
           });
 
-          return { success: true, profile_photo: res.data.profile_photo };
-
+          return { success: true };
         } catch (err) {
-          const errorMsg = err.response?.data?.error || "Failed to upload profile photo";
+          const errorMsg =
+            err.response?.data?.error ||
+            "Failed to upload profile photo";
+
           toast.error(errorMsg);
 
-          set({ loading: false, error: errorMsg });
+          set({
+            loading: false,
+            error: errorMsg,
+          });
+
           return { success: false, error: errorMsg };
         }
       },
     }),
-
-    {
-      name: "user-store",
-    }
+    { name: "user-store" }
   )
 );

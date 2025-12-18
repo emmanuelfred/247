@@ -17,7 +17,7 @@ export default function SuccessPost() {
 
       {/* Heading */}
       <h1 className="text-2xl font-semibold text-gray-800 mb-2">
-        Application Submitted Successfully
+       LIsting Submitted Successfully
       </h1>
 
       {/* Subtext */}
@@ -25,9 +25,7 @@ export default function SuccessPost() {
         Your listing will be reviewed by our team within 24 hours before going live. You'll receive a notification once it's approved.
       </p>
      <div className="flex gap-3 mt-3 md:mt-0 w-full flex-col md:flex-row">
-                <button className="flex flex-1 items-center justify-center gap-2 py-2  rounded-md bg-[#FCEEE7] ">
-                  View My Applications
-                </button>
+                
                 <button  onClick={() => navigate("/")} className="flex flex-1 items-center justify-center gap-2  py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-md">
                    Continue Browsing Jobs
                 </button>

@@ -63,9 +63,9 @@ export default function ChatPage() {
   }, [activeChat?.chat_id, accessToken]);
 
   // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  //useEffect(() => {
+   // scrollToBottom();
+  //}, [messages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

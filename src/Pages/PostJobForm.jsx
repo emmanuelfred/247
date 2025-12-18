@@ -136,7 +136,7 @@ export default function PostJobForm() {
 
     if (result.success) {
       // Redirect to my jobs page
-      navigate("/jobs/my-posts");
+      navigate("/success");
     }
   };
 

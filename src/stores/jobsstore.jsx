@@ -323,6 +323,7 @@ export const useJobsStore = create((set, get) => ({
       const response = await axios.get(
         `${API_URL}/search/jobs/?${params.toString()}`
       );
+      console.log('Search jobs response:', response.data);
 
       set({
         jobs: response.data.jobs,

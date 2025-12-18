@@ -39,7 +39,7 @@ export default function PropertyList() {
     return (
       <div className="max-w-6xl mx-auto py-10 px-3 md:px-4 pt-13 md:pt-22">
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400"></div>
         </div>
       </div>
     );

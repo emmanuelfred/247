@@ -138,6 +138,10 @@ export default function Settings() {
             </div>
           ))}
         </div>
+         <button className="border border-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-50">
+          update  Notification Preferences
+         </button>
+
       </div>
 
       {/* Logout Button */}

@@ -1,4 +1,4 @@
-import { Star, ChevronDown, ThumbsUp, ThumbsDown, Reply, MapPin, Clock, Home, CheckCircle, Share2, Bookmark, Briefcase, DollarSign } from "lucide-react";
+import { Star,  Phone, ChevronDown, ThumbsUp, ThumbsDown, Reply, MapPin, Clock, Home, CheckCircle, Share2, Bookmark, Briefcase, DollarSign } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import ReportListingModal from "../Component/ReportListingModal";
@@ -9,7 +9,7 @@ import check from '../assets/SVG_margin.png';
 import WriteReviewModal from "../Component/WriteReviewModal";
 import { useReviewStore } from "../stores/reviewStore";
 import { useUserStore } from "../stores/userStore";
-
+import ChatButton from "../Component/Chatbutton";
 export default function JobListingDetail() {
   const { id } = useParams();
   const { currentJob, fetchJobDetail, jobs, fetchJobs, loading } = useJobsStore();
@@ -50,7 +50,11 @@ export default function JobListingDetail() {
   const handleReviewSubmit = () => {
     fetchReviews('job', id, { sort: sortBy });
   };
-
+  const handleContactSeller = () => {
+    if (currentJob.posted_by.phone_number) {
+      window.open(`tel:${currentJob.posted_by.phone_number}`, "_blank");
+    }
+  };
   // ⭐ FORMAT DATE
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -137,11 +141,11 @@ export default function JobListingDetail() {
               </span>
               <span className="flex items-center gap-1 whitespace-nowrap">
                 <DollarSign size={14} className="flex-shrink-0" /> 
-                ₦{currentJob.minimum_salary}-{currentJob.maximum_salary}
+                {`₦${currentJob.minimum_salary}-${currentJob.maximum_salary}/${currentJob.salary_period.replace('per_', '')}`}
               </span>
               <span className="flex items-center gap-1 whitespace-nowrap">
                 <Clock size={14} className="flex-shrink-0" /> 
-                Posted {new Date(currentJob.created_at).toLocaleDateString()}
+                Posted {currentJob.created_at}
               </span>
             </div>
 
@@ -157,7 +161,7 @@ export default function JobListingDetail() {
                 } else {
                   window.location.href = `mailto:${currentJob.application_email}`;
               }}}>
-                {currentJob.application_method === 'external_link' ? 'Apply Now' : 'Contact Employer'}
+                {currentJob.application_method === 'external_link'||currentJob.application_method === 'onsite' ? 'Apply Now' : 'Contact Employer'}
               </button>
               <button className="p-2 border border-gray-200 rounded-md hover:bg-gray-50">
                 <Bookmark size={16} />
@@ -235,6 +239,20 @@ export default function JobListingDetail() {
               listingId={currentJob.id} 
             />
             </div>
+               <div className="flex flex-col gap-2 p-4 border-t border-gray-100 mt-4">
+                          <p className="text-xs font-semibold text-gray-800">
+                            {`₦${currentJob.minimum_salary}-${currentJob.maximum_salary}/${currentJob.salary_period.replace('per_', '')}`}
+                          </p>
+                          <div className="flex gap-3 mt-3 md:mt-0">
+                            <button 
+                              onClick={handleContactSeller}
+                              className="flex flex-1 items-center justify-center gap-2 py-2 rounded-md bg-[#FCEEE7]"
+                            >
+                              <Phone size={18} /> Contact Creator
+                            </button>
+                            <ChatButton listingType="job" listingId={currentJob.id} ownerId={currentJob.posted_by.id} />
+                          </div>
+                        </div>
           </div>
 
           {/* Job Description */}

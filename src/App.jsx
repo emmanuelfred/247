@@ -27,7 +27,8 @@ import ResetPassword from './Pages/ResetPassword';
 import ResetSuccess from './Pages/ResetSuccess';
 import VerifyOTP from './Pages/VerifyOTP';
 import VerificationSuccess from './Pages/VerificationSuccess';
-import AdvertisementPage from './Pages/AdvertisementPage';
+
+import NotificationsPage from './Pages/NotificationsPage'; // ✅ NEW
 import { Toaster } from "react-hot-toast";
 import EmailVerificationSuccess from './Pages/EmailVerificationSuccess';
 import ProtectedRoute from './Component/ProtectedRoute';
@@ -52,7 +53,8 @@ function App() {
          <Route path="/profile" element={<ProtectedRoute><ProfilePage/></ProtectedRoute>} />
          <Route path="/chat/:id" element={<ProtectedRoute><ChatPage/></ProtectedRoute>} />
          <Route path="/chat" element={<ProtectedRoute><ChatPage/></ProtectedRoute>} />
-        
+         {/* ✅ NEW: Notifications Page */}
+        <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
 
           <Route path="/jobs/:jobId/applications" element={<ProtectedRoute><ReviewApplicationsPage /></ProtectedRoute>} />
           <Route path="/applications/:applicationId" element={<ProtectedRoute><ReviewApplicationDetailPage /></ProtectedRoute>} />
@@ -62,7 +64,7 @@ function App() {
          <Route path="/post-property" element={<ProtectedRoute><PostPropertyForm/></ProtectedRoute>} />
          <Route path="/success" element={<SuccessPost/>} />
          <Route path="/success_application" element={<SuccessApplcation/>} />
-         <Route path="/apply/:id" element={<Application/>} />
+         <Route path="/apply/:id" element={<ProtectedRoute><Application/></ProtectedRoute>} />
          <Route path="/login" element={<LoginPage/>} />
          <Route path="/signup" element={<SignupPage/>} />
          <Route path="/verify_identity/:user_id" element={<IdentityVerification/>} />
@@ -72,7 +74,7 @@ function App() {
          <Route path="/verify-otp" element={<VerifyOTP/>} />
          <Route path="/Verify_success" element={<VerificationSuccess/>} />
          <Route path="/verify-email/:uid/:token" element={<EmailVerificationSuccess/>} />
-         <Route path="/advert" element={<AdvertisementPage/>} />
+        
 
 
          
