@@ -11,14 +11,34 @@ import {
   FaTimes,
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
-import logo from '../../assets/Logo.png'
+import logo from '../../assets/Logo.png';
 import { useUserStore } from "../../stores/userStore";
+import { useNotificationStore } from "../../stores/notificationStore"; // ✅ NEW
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [active, setActive] = useState('home');
+  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false); // ✅ NEW
+  const jsx="true";
   const { user } = useUserStore();
+  const { unreadCount, notifications, fetchUnreadCount, fetchNotifications, markAsRead } = useNotificationStore(); // ✅ NEW
+
+  // ✅ Fetch unread count on mount and every 30 seconds
+  useEffect(() => {
+    if (user) {
+      fetchUnreadCount();
+      fetchNotifications(1, 'all', 10); // Get last 10 for dropdown
+      
+      // Auto-refresh every 30 seconds
+      const interval = setInterval(() => {
+        fetchUnreadCount();
+        fetchNotifications(1, 'all', 10);
+      }, 30000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [user]);
 
   // Get user initials for fallback
   const getInitials = () => {
@@ -36,6 +56,28 @@ const Header = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // ✅ Handle notification click
+  const handleNotificationClick = async (notification) => {
+    await markAsRead(notification.id);
+    setShowNotificationDropdown(false);
+    
+    if (notification.action_url) {
+      window.location.href = notification.action_url;
+    }
+  };
+
+  // ✅ Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showNotificationDropdown && !event.target.closest('.notification-dropdown')) {
+        setShowNotificationDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showNotificationDropdown]);
 
   return (
     <header
@@ -93,57 +135,130 @@ const Header = () => {
               Properties
             </Link>
 
-           
-                <Link
-                  to="/mylisting"
-                  className={`flex items-center gap-2 transition-all duration-300 ${
-                    active === "listing"
-                      ? "bg-[#E1E5FF] text-[#2A3DD0] px-4 py-2 rounded-full font-medium"
-                      : "text-gray-500 hover:text-[#2A3DD0]"
-                  }`}
-                  onClick={() => setActive('listing')}
-                >
-                  <FaFolderOpen size={16} />
-                  My Listings
-                </Link>
+            <Link
+              to="/mylisting"
+              className={`flex items-center gap-2 transition-all duration-300 ${
+                active === "listing"
+                  ? "bg-[#E1E5FF] text-[#2A3DD0] px-4 py-2 rounded-full font-medium"
+                  : "text-gray-500 hover:text-[#2A3DD0]"
+              }`}
+              onClick={() => setActive('listing')}
+            >
+              <FaFolderOpen size={16} />
+              My Listings
+            </Link>
 
-                <Link
-                  to="/chat"
-                  className={`flex items-center gap-2 transition-all duration-300 ${
-                    active === "chat"
-                      ? "bg-[#E1E5FF] text-[#2A3DD0] px-4 py-2 rounded-full font-medium"
-                      : "text-gray-500 hover:text-[#2A3DD0]"
-                  }`}
-                  onClick={() => setActive('chat')}
-                >
-                  <FaComments size={16} />
-                  Chats
-                </Link>
+            <Link
+              to="/chat"
+              className={`flex items-center gap-2 transition-all duration-300 ${
+                active === "chat"
+                  ? "bg-[#E1E5FF] text-[#2A3DD0] px-4 py-2 rounded-full font-medium"
+                  : "text-gray-500 hover:text-[#2A3DD0]"
+              }`}
+              onClick={() => setActive('chat')}
+            >
+              <FaComments size={16} />
+              Chats
+            </Link>
 
-                <Link
-                  to="/profile"
-                  className={`flex items-center gap-2 transition-all duration-300 ${
-                    active === "profile"
-                      ? "bg-[#E1E5FF] text-[#2A3DD0] px-4 py-2 rounded-full font-medium"
-                      : "text-gray-500 hover:text-[#2A3DD0]"
-                  }`}
-                  onClick={() => setActive('profile')}
-                >
-                  <FaUser size={16} />
-                  Profile
-                </Link>
-           
-           
+            <Link
+              to="/profile"
+              className={`flex items-center gap-2 transition-all duration-300 ${
+                active === "profile"
+                  ? "bg-[#E1E5FF] text-[#2A3DD0] px-4 py-2 rounded-full font-medium"
+                  : "text-gray-500 hover:text-[#2A3DD0]"
+              }`}
+              onClick={() => setActive('profile')}
+            >
+              <FaUser size={16} />
+              Profile
+            </Link>
           </nav>
 
           {/* Right Icons & Mobile Menu Button */}
           <div className="flex items-center space-x-4">
             {user ? (
               <>
-                {/* Notification Bell */}
-                <div className="relative hidden md:block">
-                  <FaBell size={20} className="text-gray-600 cursor-pointer" />
-                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full"></span>
+                {/* ✅ NOTIFICATION BELL WITH DROPDOWN */}
+                <div className="relative hidden md:block notification-dropdown">
+                  <button
+                    onClick={() => setShowNotificationDropdown(!showNotificationDropdown)}
+                    className="relative focus:outline-none"
+                  >
+                    <FaBell size={20} className="text-gray-600 cursor-pointer hover:text-[#2A3DD0] transition" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-semibold">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Notification Dropdown */}
+                  {showNotificationDropdown && (
+                    <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-[500px] overflow-hidden">
+                      {/* Header */}
+                      <div className="flex items-center justify-between p-4 border-b">
+                        <h3 className="font-semibold text-gray-900">Notifications</h3>
+                        {unreadCount > 0 && (
+                          <Link
+                            to="/notifications"
+                            className="text-xs text-blue-600 hover:text-blue-800"
+                            onClick={() => setShowNotificationDropdown(false)}
+                          >
+                            View all
+                          </Link>
+                        )}
+                      </div>
+
+                      {/* Notifications List */}
+                      <div className="overflow-y-auto max-h-[400px]">
+                        {notifications.length > 0 ? (
+                          notifications.slice(0, 10).map((notification) => (
+                            <button
+                              key={notification.id}
+                              onClick={() => handleNotificationClick(notification)}
+                              className={`w-full text-left p-4 hover:bg-gray-50 border-b transition ${
+                                !notification.is_read ? 'bg-blue-50' : ''
+                              }`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-sm text-gray-900 truncate">
+                                    {notification.title}
+                                  </p>
+                                  <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                                    {notification.message}
+                                  </p>
+                                  <p className="text-xs text-gray-400 mt-1">
+                                    {notification.time_since}
+                                  </p>
+                                </div>
+                                {!notification.is_read && (
+                                  <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></span>
+                                )}
+                              </div>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="p-8 text-center">
+                            <FaBell size={32} className="text-gray-300 mx-auto mb-3" />
+                            <p className="text-sm text-gray-500">No notifications yet</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Footer */}
+                      <div className="p-3 border-t text-center bg-gray-50">
+                        <Link
+                          to="/notifications"
+                          className="text-sm text-[#2A3DD0] hover:text-[#1a2db0] font-medium"
+                          onClick={() => setShowNotificationDropdown(false)}
+                        >
+                          View all notifications
+                        </Link>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Profile Picture or Initials */}
@@ -252,60 +367,75 @@ const Header = () => {
               Properties
             </Link>
 
-           
-                <Link
-                  to="/mylisting"
-                  className={`flex items-center gap-2 transition-all duration-300 ${
-                    active === "listing"
-                      ? "text-[#2A3DD0] font-medium"
-                      : "text-gray-600"
-                  }`}
-                  onClick={() => {
-                    setActive('listing');
-                    setIsMenuOpen(false);
-                  }}
-                >
-                  <FaFolderOpen size={16} />
-                  My Listings
-                </Link>
+            <Link
+              to="/mylisting"
+              className={`flex items-center gap-2 transition-all duration-300 ${
+                active === "listing"
+                  ? "text-[#2A3DD0] font-medium"
+                  : "text-gray-600"
+              }`}
+              onClick={() => {
+                setActive('listing');
+                setIsMenuOpen(false);
+              }}
+            >
+              <FaFolderOpen size={16} />
+              My Listings
+            </Link>
 
-                <Link
-                  to="/chat"
-                  className={`flex items-center gap-2 transition-all duration-300 ${
-                    active === "chat"
-                      ? "text-[#2A3DD0] font-medium"
-                      : "text-gray-600"
-                  }`}
-                  onClick={() => {
-                    setActive('chat');
-                    setIsMenuOpen(false);
-                  }}
-                >
-                  <FaComments size={16} />
-                  Chats
-                </Link>
+            <Link
+              to="/chat"
+              className={`flex items-center gap-2 transition-all duration-300 ${
+                active === "chat"
+                  ? "text-[#2A3DD0] font-medium"
+                  : "text-gray-600"
+              }`}
+              onClick={() => {
+                setActive('chat');
+                setIsMenuOpen(false);
+              }}
+            >
+              <FaComments size={16} />
+              Chats
+            </Link>
 
-                <Link
-                  to="/profile"
-                  className={`flex items-center gap-2 transition-all duration-300 ${
-                    active === "profile"
-                      ? "text-[#2A3DD0] font-medium"
-                      : "text-gray-600"
-                  }`}
-                  onClick={() => {
-                    setActive('profile');
-                    setIsMenuOpen(false);
-                  }}
-                >
-                  <FaUser size={16} />
-                  Profile
-                </Link>
-              {user ? (
+            <Link
+              to="/profile"
+              className={`flex items-center gap-2 transition-all duration-300 ${
+                active === "profile"
+                  ? "text-[#2A3DD0] font-medium"
+                  : "text-gray-600"
+              }`}
+              onClick={() => {
+                setActive('profile');
+                setIsMenuOpen(false);
+              }}
+            >
+              <FaUser size={16} />
+              Profile
+            </Link>
+
+            {user ? (
               <>
+                {/* ✅ Mobile Notification Link */}
+                <Link
+                  to="/notifications"
+                  className="flex items-center gap-2 text-gray-600 border-t border-gray-200 pt-3"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <div className="relative">
+                    <FaBell size={18} className="text-gray-600" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-semibold">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </div>
+                  Notifications
+                </Link>
 
                 {/* Mobile User Section */}
-                <div className="flex items-center gap-3 border-t border-gray-200 pt-3">
-                  <FaBell size={18} className="text-gray-600" />
+                <div className="flex items-center gap-3">
                   {user.profile_photo ? (
                     <img
                       src={user.profile_photo}
@@ -341,6 +471,15 @@ const Header = () => {
           </nav>
         </div>
       )}
+     
+      <style jsx>{`
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+      `}</style>
     </header>
   );
 };

@@ -87,7 +87,7 @@ const handleSubmit = async (e) => {
         backgroundImage: "linear-gradient(#0000003c,#0000003c),url('/bg.jpg')",
       }}
     >
-      <Toaster position="top-center" />
+      
 
       <div className="relative z-10 bg-white/95 rounded-2xl shadow-lg w-full md:max-w-lg p-8 m-4">
         <h2 className="text-2xl font-semibold text-center mb-1">
